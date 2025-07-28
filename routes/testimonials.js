@@ -195,11 +195,13 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// GET /api/testimonials - Lister les témoignages approuvés
+// GET /api/testimonials?status=pending OR status=approved
 router.get('/', async (req, res) => {
   try {
+    const status = req.query.status || 'approved'; // Par défaut : approved
+
     const testimonials = await Testimonial.findAll({
-      where: { status: 'approved' },
+      where: { status },
       order: [['createdAt', 'DESC']],
       attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'createdAt']
     });
