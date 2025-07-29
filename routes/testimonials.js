@@ -75,6 +75,43 @@ router.post('/', validateTestimonial, async (req, res) => {
   }
 });
 
+// GET /api/testimonials?status=approved|pending|rejected
+router.get('/', async (req, res) => {
+  try {
+    const { status = 'approved' } = req.query;
+    
+    // Validation du paramètre status
+    const validStatuses = ['approved', 'pending', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Statut invalide. Valeurs autorisées : approved, pending, rejected'
+      });
+    }
+
+    const testimonials = await Testimonial.findAll({
+      where: { status },
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'status', 'createdAt'] // Ajout de status
+    });
+
+    res.json({ 
+      success: true, 
+      data: testimonials,
+      count: testimonials.length,
+      statusFilter: status // Information utile pour le frontend
+    });
+
+  } catch (error) {
+    console.error('Erreur récupération témoignages:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // GET /api/testimonials/:id - Récupérer un témoignage spécifique
 router.get('/:id', async (req, res) => {
   try {
@@ -83,17 +120,26 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!testimonial) {
-      return res.status(404).json({ success: false, message: 'Témoignage non trouvé' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Témoignage non trouvé' 
+      });
     }
 
-    if (testimonial.status !== 'approved' && !req.user?.isAdmin) {
+    // Vérification des permissions
+    const canAccess = testimonial.status === 'approved' || req.user?.isAdmin;
+    if (!canAccess) {
       return res.status(403).json({ 
         success: false, 
         message: 'Accès non autorisé à ce témoignage' 
       });
     }
 
-    res.json({ success: true, data: testimonial });
+    res.json({ 
+      success: true, 
+      data: testimonial,
+      isAdminView: !!req.user?.isAdmin // Information utile pour le frontend
+    });
 
   } catch (error) {
     console.error('Erreur récupération témoignage:', error);
@@ -190,33 +236,6 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la suppression',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-// GET /api/testimonials?status=pending OR status=approved
-router.get('/', async (req, res) => {
-  try {
-    const status = req.query.status || 'approved'; // Par défaut : approved
-
-    const testimonials = await Testimonial.findAll({
-      where: { status },
-      order: [['createdAt', 'DESC']],
-      attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'createdAt']
-    });
-
-    res.json({ 
-      success: true, 
-      data: testimonials,
-      count: testimonials.length
-    });
-
-  } catch (error) {
-    console.error('Erreur récupération témoignages:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

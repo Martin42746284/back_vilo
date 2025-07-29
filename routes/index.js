@@ -18,7 +18,7 @@ router.use('/appointments', appointmentRoutes);
 router.use('/admin', adminRoutes);
 router.use('/users', userRoutes);
 router.use('/api', testRoutes);
-router.use('/api', testimonialRoutes);
+router.use('/testimonials', testimonialRoutes);
 
 // Route de test
 router.get('/health', (req, res) => {

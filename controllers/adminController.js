@@ -22,6 +22,17 @@ exports.getAppointments = async (req, res) => {
   }
 };
 
+// GET /admin/testimonials
+exports.getTestimonials = async (req, res) => {
+  try {
+    const testimonials = await Testimonial.findAll({ order: [['createdAt', 'DESC']] });
+    res.json(testimonials);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur lors du chargement des témoignages" });
+  }
+};
+
 // PUT /admin/contacts/:id
 exports.updateContactStatus = async (req, res) => {
   try {
@@ -59,3 +70,22 @@ exports.updateAppointmentStatus = async (req, res) => {
     res.status(500).json({ message: "Erreur mise à jour rendez-vous" });
   }
 };
+
+//PUT /admin/testimonials/:id
+exports.updateTestimonialStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const testimonial = await Testimonial.findByPk(id);
+    if (!testimonial) return res.status(404).json({ message: 'Témoignage non trouvé' });
+
+    testimonial.status = status;
+    await testimonial.save();
+
+    res.json({ success: true, message: "Statut mis à jour", testimonial });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur mise à jour témoignage" });
+  }
+}
