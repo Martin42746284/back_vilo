@@ -75,6 +75,86 @@ router.post('/', validateTestimonial, async (req, res) => {
   }
 });
 
+// GET /api/testimonials/pending - Récupère uniquement les témoignages en attente
+router.get('/pending', async (req, res) => {
+  try {
+    // Récupération uniquement des témoignages avec status = 'pending'
+    const testimonials = await Testimonial.findAll({
+      where: { status: 'pending' }, // Filtre fixe
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'status', 'createdAt']
+    });
+
+    res.json({ 
+      success: true, 
+      data: testimonials,
+      count: testimonials.length,
+      message: 'Témoignages en attente récupérés avec succès',
+      statusFilter: 'pending' // Information constante
+    });
+
+  } catch (error) {
+    console.error('Erreur récupération témoignages en attente:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur lors de la récupération des témoignages en attente',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/testimonials/admin - Récupérer TOUS les témoignages (admin seulement)
+router.get('/admin', async (req, res) => {
+  try {
+    console.log('User object:', req.user); // Vérifiez ce qui est reçu
+    console.log('Is admin?', req.user?.isAdmin);
+    // Vérification des permissions (à adapter selon votre système d'authentification)
+    if (!req.user?.isAdmin) {
+      console.log('Échec autorisation - User:', req.user);
+      return res.status(403).json({
+        success: false,
+        message: 'Accès non autorisé. Réservé aux administrateurs'
+      });
+    }
+
+    // Récupération avec possibilité de filtrer par status (optionnel)
+    const { status } = req.query;
+    
+    const whereClause = {};
+    if (status) {
+      const validStatuses = ['approved', 'pending', 'rejected'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Statut invalide. Valeurs autorisées : approved, pending, rejected'
+        });
+      }
+      whereClause.status = status;
+    }
+
+    const testimonials = await Testimonial.findAll({
+      where: whereClause, // vide si aucun filtre
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'status', 'createdAt', 'updatedAt']
+    });
+
+    res.json({ 
+      success: true, 
+      data: testimonials,
+      count: testimonials.length,
+      filteredBy: status || 'all' // Information utile pour le frontend
+    });
+    
+  } catch (error) {
+    console.error('Erreur récupération témoignages (admin):', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // GET /api/testimonials?status=approved|pending|rejected
 router.get('/', async (req, res) => {
   try {

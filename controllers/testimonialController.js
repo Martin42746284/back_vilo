@@ -35,6 +35,37 @@ exports.getTestimonials = async (req, res) => {
   }
 };
 
+// ✅ GET /admin - Récupérer tous les témoignages (admin seulement)
+exports.getAdminTestimonials = async (req, res) => {
+  try {
+    // Vérification admin (à adapter à votre système)
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Accès réservé aux administrateurs' 
+      });
+    }
+
+    const testimonials = await Testimonial.findAll({
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'name', 'post', 'entreprise', 'comment', 'rating', 'status', 'createdAt', 'updatedAt']
+    });
+
+    res.json({
+      success: true,
+      data: testimonials,
+      count: testimonials.length
+    });
+  } catch (err) {
+    console.error('Erreur getAdminTestimonials:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
 // ✅ POST - Créer un nouveau témoignage
 exports.createTestimonial = async (req, res) => {
   console.log('Contenu de req.body:', req.body);
