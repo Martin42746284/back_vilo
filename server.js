@@ -18,7 +18,7 @@ const app = express();
 
 // ✅ CORS: liste des domaines autorisés
 const allowedOrigins = [
-  // 'https://vilo-assist-pro-frontend.vercel.app',
+  'https://frontend-vilo-assist-pro.vercel.app/',
   'http://localhost:8081'
 ];
 
