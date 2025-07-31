@@ -20,9 +20,9 @@ async function createAdmin() {
     const admin = await User.create({
       firstName: 'Admin',
       lastName: 'System',
-      email: 'admin@viloassist.com',
-      password: 'admin123', // Sera hashé automatiquement par le hook beforeSave
-      phone: '1234567890',
+      email: 'admin.login@viloassist.com',
+      password: 'loginAdmin@25!!vilo', // Sera hashé automatiquement par le hook beforeSave
+      phone: '0332178785',
       role: 'admin',
       emailVerified: true,
       isActive: true
